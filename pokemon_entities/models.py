@@ -13,5 +13,8 @@ class PokemonEntity(models.Model):
     lat = models.FloatField(blank=True)
     lon = models.FloatField(blank=True)
 
-    def __str__(self):
-        return '{} or {}'.format(self.lat, self.lon)
+    appeared_at = models.DateTimeField(null=True)
+    disappeared_at = models.DateTimeField(null=True)
+
+    # def __str__(self):
+    #     return '{}'.format(self.lat, self.lon)
