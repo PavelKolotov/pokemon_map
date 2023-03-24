@@ -1,8 +1,7 @@
 import folium
-import json
+
 
 from pokemon_entities.models import Pokemon, PokemonEntity
-from django.http import HttpResponseNotFound
 from django.shortcuts import render
 from django.utils.timezone import localtime
 
@@ -59,21 +58,11 @@ def show_all_pokemons(request):
 
 def show_pokemon(request, pokemon_id):
 
-    pokemon = Pokemon.objects.get(id=pokemon_id)
+    pokemon = Pokemon.objects.get(pk=pokemon_id)
 
     datetime_now = localtime()
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
-    pokemon_entities = PokemonEntity.objects.filter(appeared_at__lte=datetime_now, disappeared_at__gt=datetime_now)
-
-    pokemon_data = {
-        'title_ru': pokemon.title,
-        'title_en': pokemon.title_en,
-        'title_jp': pokemon.title_jp,
-        'description': pokemon.description,
-        'img_url': pokemon.image.url
-    }
-
-
+    pokemon_entities = pokemon.entities.filter(appeared_at__lte=datetime_now, disappeared_at__gt=datetime_now)
 
     for pokemon_entity in pokemon_entities:
         img_url = request.build_absolute_uri(location=pokemon_entity.pokemon.image.url)
@@ -83,6 +72,39 @@ def show_pokemon(request, pokemon_id):
             img_url
         )
 
+    pokemon_data = {
+        'title_ru': pokemon.title,
+        'title_en': pokemon.title_en,
+        'title_jp': pokemon.title_jp,
+        'description': pokemon.description,
+        'img_url': pokemon.image.url,
+    }
+
+    if pokemon.parent:
+        parent_data = {
+            'title_ru': pokemon.parent.title,
+            'pokemon_id': pokemon.parent.id,
+            'img_url': request.build_absolute_uri(location=pokemon.parent.image.url)
+        }
+    else:
+        parent_data = None
+
+    pokemon_data['previous_evolution'] = parent_data
+
+
+    if pokemon.child.first():
+        child_data = {
+            'title_ru': pokemon.child.first().title,
+            'pokemon_id': pokemon.child.first().id,
+            'img_url': request.build_absolute_uri(location=pokemon.child.first().image.url)
+        }
+    else:
+        child_data = None
+
+    pokemon_data['next_evolution'] = child_data
+
+
     return render(request, 'pokemon.html', context={
-        'map': folium_map._repr_html_(), 'pokemon': pokemon_data
+        'map': folium_map._repr_html_(),
+        'pokemon': pokemon_data,
     })
