@@ -1,6 +1,7 @@
 import folium
 
 
+from django.shortcuts import get_object_or_404
 from pokemon_entities.models import Pokemon, PokemonEntity
 from django.shortcuts import render
 from django.utils.timezone import localtime
@@ -58,7 +59,7 @@ def show_all_pokemons(request):
 
 def show_pokemon(request, pokemon_id):
 
-    pokemon = Pokemon.objects.get(pk=pokemon_id)
+    pokemon = get_object_or_404(Pokemon, id=pokemon_id)
 
     datetime_now = localtime()
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
@@ -86,22 +87,16 @@ def show_pokemon(request, pokemon_id):
             'pokemon_id': pokemon.parent.id,
             'img_url': request.build_absolute_uri(location=pokemon.parent.image.url)
         }
-    else:
-        parent_data = None
-
-    pokemon_data['previous_evolution'] = parent_data
+        pokemon_data['previous_evolution'] = parent_data
 
 
-    if pokemon.child.first():
+    if pokemon.childs.first():
         child_data = {
-            'title_ru': pokemon.child.first().title,
-            'pokemon_id': pokemon.child.first().id,
-            'img_url': request.build_absolute_uri(location=pokemon.child.first().image.url)
+            'title_ru': pokemon.childs.first().title,
+            'pokemon_id': pokemon.childs.first().id,
+            'img_url': request.build_absolute_uri(location=pokemon.childs.first().image.url)
         }
-    else:
-        child_data = None
-
-    pokemon_data['next_evolution'] = child_data
+        pokemon_data['next_evolution'] = child_data
 
 
     return render(request, 'pokemon.html', context={
